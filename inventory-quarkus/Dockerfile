@@ -10,7 +10,7 @@ RUN mvn package -DskipTests
 FROM openjdk:11-jre-slim
 COPY --from=build /app/target/*-runner.jar /deployments/app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/deployments/app.jar"]
+CMD ["java", "-jar", "/deployments/app.jar"]
 
 ## commands
-# export IMG=quay.io/rh-ee-yuewu/inventory-quarkus:v1.0.0
+# export IMG=quay.io/rh-ee-yuewu/inventory-quarkus:v2.0.0

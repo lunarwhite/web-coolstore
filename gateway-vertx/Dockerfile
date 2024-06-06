@@ -11,7 +11,7 @@ FROM openjdk:11-jre-slim
 WORKDIR /app
 COPY --from=build /app/target/gateway-1.0-SNAPSHOT.jar /app/gateway.jar
 EXPOSE 9090
-ENTRYPOINT ["java", "-Djava.net.preferIPv4Stack=true", "-Dvertx.cacheDirBase=/tmp/vertx", "-Djava.io.tmpdir=/tmp", "-jar", "gateway.jar", "--server.port=9090"]
+CMD ["java", "-Djava.net.preferIPv4Stack=true", "-Dvertx.cacheDirBase=/tmp/vertx", "-Djava.io.tmpdir=/tmp", "-jar", "gateway.jar", "--server.port=9090"]
 
 ## commands
-# export IMG=quay.io/rh-ee-yuewu/gateway-vertx:v1.0.0
+# export IMG=quay.io/rh-ee-yuewu/gateway-vertx:v2.0.0

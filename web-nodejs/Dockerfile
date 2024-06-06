@@ -1,17 +1,13 @@
 # build
-FROM node:14 AS build
-WORKDIR /app
-COPY package*.json ./
-RUN npm install --production
-
-# serve
 FROM node:14-slim
-ENV COOLSTORE_GW_ENDPOINT=http://localhost:9090
-WORKDIR /app
-COPY --from=build /app/node_modules ./node_modules
-COPY . /app
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN chmod -R a+rw /usr/src/app
+USER 1001
 EXPOSE 3000
-ENTRYPOINT ["npm", "start"]
+CMD ["npm", "start"]
 
 ## commands
-# export IMG=quay.io/rh-ee-yuewu/web-nodejs:v1.0.0
+# export IMG=quay.io/rh-ee-yuewu/web-nodejs:v2.0.0
