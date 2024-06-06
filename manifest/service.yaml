@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-first-app-service
+  namespace: test-single-pod
+spec:
+  selector:
+    app: web-coolstore
+  ports:
+    - name: web
+      protocol: TCP
+      port: 80
+      targetPort: 3000
+    - name: gateway
+      protocol: TCP
+      port: 81
+      targetPort: 9090
+  type: ClusterIP
