@@ -1,0 +1,18 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: web
+  labels:
+    app: web
+    app.kubernetes.io/name: web
+    app.kubernetes.io/component: web-nodejs
+    app.kubernetes.io/part-of: coolstore
+spec:
+  selector:
+    app: web
+  ports:
+    - name: http
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP

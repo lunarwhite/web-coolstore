@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: test-multi-pods
+commonLabels:
+  app.kubernetes.io/part-of: coolstore-kustomzie
+resources:
+  - deploy-catalog.yaml
+  - svc-catalog.yaml
+  - deploy-inventory.yaml
+  - svc-inventory.yaml
+  - deploy-gateway.yaml
+  - svc-gateway.yaml
+  - route-gateway.yaml
+  - deploy-web.yaml
+  - svc-web.yaml
+  - route-web.yaml
+vars:
+  - name: GATEWAY_SERVICE_NAME
+    objref:
+      kind: Service
+      apiVersion: v1
+      name: gateway
+    fieldref:
+      fieldpath: metadata.name
+  - name: GATEWAY_NAMESPACE
+    objref:
+      kind: Service
+      apiVersion: v1
+      name: gateway
+    fieldref:
+      fieldpath: metadata.namespace
