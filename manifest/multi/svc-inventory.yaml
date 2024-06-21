@@ -6,7 +6,6 @@ metadata:
     app: inventory
     app.kubernetes.io/name: inventory
     app.kubernetes.io/component: inventory-quarkus
-    app.kubernetes.io/part-of: coolstore
 spec:
   selector:
     app: inventory

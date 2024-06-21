@@ -6,7 +6,6 @@ metadata:
     app: web
     app.kubernetes.io/name: web
     app.kubernetes.io/component: web-nodejs
-    app.kubernetes.io/part-of: coolstore
 spec:
   selector:
     app: web

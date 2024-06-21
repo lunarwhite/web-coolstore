@@ -7,7 +7,6 @@ metadata:
     app.kubernetes.io/name: catalog
     app.kubernetes.io/component: catalog-spring-boot
     app.kubernetes.io/version: "v2.0.1"
-    app.kubernetes.io/part-of: coolstore
 spec:
   replicas: 1
   selector:

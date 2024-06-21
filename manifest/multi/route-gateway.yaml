@@ -6,7 +6,6 @@ metadata:
     app: gateway
     app.kubernetes.io/name: gateway
     app.kubernetes.io/component: gateway-vertx
-    app.kubernetes.io/part-of: coolstore
 spec:
   to:
     kind: Service

@@ -6,7 +6,6 @@ metadata:
     app: catalog
     app.kubernetes.io/name: catalog
     app.kubernetes.io/component: catalog-spring-boot
-    app.kubernetes.io/part-of: coolstore
 spec:
   selector:
     app: catalog

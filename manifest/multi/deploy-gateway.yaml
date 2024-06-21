@@ -7,7 +7,6 @@ metadata:
     app.kubernetes.io/name: gateway
     app.kubernetes.io/component: gateway-vertx
     app.kubernetes.io/version: "v2.0.1"
-    app.kubernetes.io/part-of: coolstore
 spec:
   replicas: 1
   selector:
@@ -24,14 +23,8 @@ spec:
           ports:
             - containerPort: 9090
               protocol: TCP
-          env:
-            - name: CATALOG_COOLSTORE_SERVICE_HOST
-              value: catalog
-            - name: CATALOG_COOLSTORE_SERVICE_PORT
-              value: "9000"
-            - name: INVENTORY_COOLSTORE_SERVICE_HOST
-              value: inventory
-            - name: INVENTORY_COOLSTORE_SERVICE_PORT
-              value: "8080"
+          envFrom:
+            - configMapRef:
+                name: gateway-config
           imagePullPolicy: Always
           resources: {}
