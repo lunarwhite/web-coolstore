@@ -12,6 +12,3 @@ WORKDIR /app
 COPY --from=build /app/target/catalog-1.0-SNAPSHOT.jar /app/app.jar
 EXPOSE 9000
 CMD ["java", "-jar", "app.jar", "--server.port=9000"]
-
-## commands
-# export IMG=quay.io/rh-ee-yuewu/catalog-spring-boot:v2.0.0
