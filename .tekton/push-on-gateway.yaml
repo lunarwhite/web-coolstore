@@ -1,0 +1,103 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: push-on-gateway
+  annotations:
+    pipelinesascode.tekton.dev/on-event: "[push]"
+    pipelinesascode.tekton.dev/on-target-branch: "[ci]"
+    pipelinesascode.tekton.dev/task: "[git-clone, kaniko]"
+    pipelinesascode.tekton.dev/task-1: "[.tekton/task/update-gitops-via-patch.yaml]"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && "gateway-vertx/***".pathChanged()
+    pipelinesascode.tekton.dev/max-keep-runs: "5"
+spec:
+  params:
+    - name: repo_url
+      value: "{{ repo_url }}"
+    - name: revision
+      value: "{{ revision }}"
+    - name: image_name
+      value: "quay.io/rh-ee-yuewu/gateway-vertx"
+    - name: image_tag
+      value: "{{ revision }}"
+    - name: context
+      value: "gateway-vertx"
+    - name: gitops_repo_url
+      value: "https://github.com/lunarwhite/playground"
+    - name: gitops_revision
+      value: "config-ci"
+    - name: gitops_config_dir
+      value: "apps/gateway/overlays/stage"
+    - name: gitops_contanier_name
+      value: "gateway"
+  pipelineSpec:
+    params:
+      - name: repo_url
+      - name: revision
+    workspaces:
+      - name: shared-workspace
+      - name: registry-auth-secret
+      - name: basic-auth
+    tasks:
+      - name: fetch-repository
+        taskRef:
+          name: git-clone
+        params:
+          - name: url
+            value: $(params.repo_url)
+          - name: revision
+            value: $(params.revision)
+        workspaces:
+          - name: output
+            workspace: shared-workspace
+      - name: build-push-image
+        runAfter:
+          - fetch-repository
+        taskRef:
+          name: kaniko
+        params:
+          - name: IMAGE
+            value: $(params.image_name):$(params.image_tag)
+          - name: CONTEXT
+            value: $(params.context)
+        workspaces:
+          - name: source
+            workspace: shared-workspace
+          - name: dockerconfig
+            workspace: registry-auth-secret
+      - name: update-gitops-config
+        runAfter:
+          - build-push-image
+        taskRef:
+          name: update-gitops-via-patch
+        params:
+          - name: url
+            value: $(params.gitops_repo_url)
+          - name: revision
+            value: $(params.gitops_revision)
+          - name: deployment_patch_dir
+            value: $(params.gitops_config_dir)
+          - name: deployment_container_name
+            value: $(params.gitops_contanier_name)
+          - name: new_image
+            value: $(tasks.build-push-image.results.IMAGE_URL)@$(tasks.build-push-image.results.IMAGE_DIGEST)
+        workspaces:
+          - name: source
+            workspace: shared-workspace
+          - name: git-auth-secret
+            workspace: basic-auth
+  workspaces:
+    - name: shared-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+    - name: registry-auth-secret
+      secret:
+        secretName: dockerconfig-secret
+    - name: basic-auth
+      secret:
+        secretName: "{{ git_auth_secret }}"

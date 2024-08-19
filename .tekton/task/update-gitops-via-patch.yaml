@@ -1,0 +1,54 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  labels:
+    app.kubernetes.io/version: "0.1"
+  name: update-gitops-via-patch
+spec:
+  description: This Task adopts newly built image into the target app's GitOps config manifests via "kubectl patch".
+  workspaces:
+    - name: source
+      description: The git repo will be cloned onto the volume backing this Workspace.
+    - name: git-auth-secret
+      description: The git credentials secret to auth the commit.
+      mountPath: /git-auth-secret
+  params:
+    - name: url
+      description: The git repo that stores your app's GitOps config manifests.
+    - name: revision
+      description: The revision of the git repo.
+    - name: deployment_patch_dir
+      description: The context directory of the target app's deployment-patch.yaml file.
+    - name: deployment_container_name
+      description: The container of the newly published image will be utilized.
+    - name: new_image
+      description: The newly published image that you want to apply.
+  steps:
+    - name: update-gitops-via-patch
+      image: quay.io/rh-ee-yuewu/toolbox:v1.0.0
+      workingDir: $(workspaces.source.path)
+      script: |
+        echo "Cloning the git repo..."
+        rm -rf gitops-repo
+        git clone $(params.url) -b $(params.revision) gitops-repo
+
+        echo "Updating the image ref in the deployment patch file..."
+        cd gitops-repo/$(params.deployment_patch_dir)
+        yq e '(.spec.template.spec.containers[] | select(.name == "$(params.deployment_container_name)")).image = "$(params.new_image)"' -i deployment-patch.yaml
+
+        echo "Checking if the image spec was updated..."
+        kustomize build .
+
+        echo "Adding a new commit..."
+        cd $(workspaces.source.path)/gitops-repo
+        git config user.email "tkn-pac-bot@tkn-pac-bot.io"
+        git config user.name "Tekton PAC Bot"
+        GIT_TOKEN=$(cat /git-auth-secret/git-provider-token)
+        GIT_URL=$(params.url)
+        git remote set-url origin "https://git:${GIT_TOKEN}@${GIT_URL#https://}"
+
+        git pull origin $(params.revision)
+        git add .
+        MESSAGE="CI: update '$(params.deployment_container_name)' container's image for '$(params.deployment_patch_dir)'"
+        git commit -m "$MESSAGE"  --signoff
+        git push

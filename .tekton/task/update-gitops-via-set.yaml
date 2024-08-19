@@ -1,0 +1,54 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  labels:
+    app.kubernetes.io/version: "0.1"
+  name: update-gitops-via-set
+spec:
+  description: This Task adopts newly built image into the target app's GitOps config manifests via "kustomize edit set image".
+  workspaces:
+    - name: source
+      description: The git repo will be cloned onto the volume backing this Workspace.
+    - name: git-auth-secret
+      description: The git credentials secret to auth the commit.
+      mountPath: /git-auth-secret
+  params:
+    - name: url
+      description: The git repo that stores your app's GitOps config manifests.
+    - name: revision
+      description: The revision of the git repo.
+    - name: kustomization_dir
+      description: The context directory of the target app's kustomization.yaml file.
+    - name: image_name
+      description: The target image name in the GitOps config manifests that you want to update.
+    - name: image_digest
+      description: The digest of the newly published image.
+  steps:
+    - name: update-gitops-via-set
+      image: quay.io/rh-ee-yuewu/toolbox:v1.0.0
+      workingDir: $(workspaces.source.path)
+      script: |
+        echo "Cloning the git repo..."
+        rm -rf gitops-repo
+        git clone $(params.url) -b $(params.revision) gitops-repo
+
+        echo "Updating the image ref in the kustomization file..."
+        cd gitops-repo/$(params.kustomization_dir)
+        kustomize edit set image "$(params.image_name)@$(params.image_digest)"
+
+        echo "Checking if the image spec was updated..."
+        kustomize build .
+
+        echo "Adding a new commit..."
+        cd $(workspaces.source.path)/gitops-repo
+        git config user.email "tkn-pac-bot@tkn-pac-bot.io"
+        git config user.name "Tekton PAC Bot"
+        GIT_TOKEN=$(cat /git-auth-secret/git-provider-token)
+        GIT_URL=$(params.url)
+        git remote set-url origin "https://git:${GIT_TOKEN}@${GIT_URL#https://}"
+
+        git pull origin $(params.revision)
+        git add .
+        MESSAGE="CI: update to use image '$(params.image_name)' for '$(params.kustomization_dir)'"
+        git commit -m "$MESSAGE" --signoff
+        git push
