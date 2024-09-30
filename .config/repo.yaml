@@ -1,0 +1,16 @@
+apiVersion: pipelinesascode.tekton.dev/v1alpha1
+kind: Repository
+metadata:
+  name: lunarwhite-web-coolstore
+spec:
+  url: https://github.com/lunarwhite/web-coolstore
+  settings:
+    github_app_token_scope_repos:
+      - "lunarwhite/playground"
+---
+apiVersion: pipelinesascode.tekton.dev/v1alpha1
+kind: Repository
+metadata:
+  name: lunarwhite-playground
+spec:
+  url: https://github.com/lunarwhite/playground
